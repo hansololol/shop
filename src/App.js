@@ -6,16 +6,22 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { createContext, useContext, useEffect, useState } from 'react';
 import data from './data.js'
-import {Routes, Route, Link, useNavigate, Outlet, useParams} from 'react-router-dom'
+import {Routes, Route, Link, useNavigate, Outlet, useParams, json} from 'react-router-dom'
 import { useLocation } from 'react-router-dom';
 import axios from 'axios'
 import Cart from './routes/Cart.js'
+import { addItem } from './store';
+import { useDispatch } from 'react-redux';
 
 //context => state 보관함 역할
 let Context1=createContext()
 
 //npm install axios - ajax 외부 라이브러리. 간편하게 ajax 사용할 수 있도록 도와줌
 function App() {
+  let obj = {name: 'kim'}
+  localStorage.setItem('data', JSON.stringify(obj))
+  let 꺼낸거 = localStorage.getItem('data')
+  console.log(JSON.parse(꺼낸거).name)
 
   let [shoes, setShoes] = useState(data);
   let navigate = useNavigate();
@@ -111,6 +117,7 @@ function 컴포넌트1(props){
 //상품 상세 컴포넌트
 function 컴포넌트2(props){
   let 재고 = useContext(Context1)
+  let dispatch = useDispatch()
   useEffect(()=>{
     //랜더링 다 된 이후 실행
     //큰 반복문처럼 시간이 걸리는 것, 어려운 것, 서버에서 데이터를 가져오는 작업, 타이머 장착 등은 나중에 동작하도록 하면 효율 굿
@@ -129,6 +136,7 @@ function 컴포넌트2(props){
     //[] 내부에 변수를 넣으면 변수가 변경되었을 때에 동작함, 기존에 실행되었을 때랑 변경되었을 때 두 번 동작
     //[] 내부에 변수 넣지 않으면 처음 mount 되었을 때 1회만 동작함
   })
+
   let[탭, 탭변경]=useState(0);
   let[count, setCount] = useState(0);
   let[alert, setAlert] = useState(true);
@@ -140,6 +148,18 @@ function 컴포넌트2(props){
   let findId=props.shoes.find(function(item){
     return item.id==id;
   })
+    //최근본 상품
+    useEffect(()=>{
+      
+      let 꺼낸거 = localStorage.getItem('watched')
+      꺼낸거 = JSON.parse(꺼낸거)
+      꺼낸거.push({id})
+    
+      //Set으로 바꿨다가 다시 array로 만들기
+      꺼낸거 = new Set(꺼낸거)
+      꺼낸거 = Array.from(꺼낸거)
+      localStorage.setItem('watched', JSON.stringify(꺼낸거))
+    }, [])
   return(
     <div className="container ">
       {
@@ -163,7 +183,9 @@ function 컴포넌트2(props){
         <h4 className="pt-5">{findId.title}</h4>
         <p>{findId.content}</p>
         <p>{findId.price}</p>
-        <button className="btn btn-danger">주문하기</button> 
+        <button className="btn btn-danger" onClick={()=>{
+          dispatch(addItem({id : props.shoes.id , name : findId.title, count : 1}))
+        }}>주문하기</button> 
       </div>
     </div>
 
